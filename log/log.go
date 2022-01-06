@@ -16,12 +16,17 @@ import (
 )
 
 const (
-	defaultLevel = log.INFO
+	fatalLevel log.Lvl = 6
+	panicLevel log.Lvl = 7
+
+	defaultLevel  = log.INFO
+	defaultHeader = "time:${time}\tprefix:${prefix}\tlevel:${level}\tfile:${file}\tline:${line}"
 )
 
 var (
 	defaultOutput = os.Stdout
-	defaultHeader = "time:${time}\tprefix:${prefix}\tlevel:${level}\tfile:${file}\tline:${line}"
+
+	exit = os.Exit
 )
 
 type Logger struct {
@@ -46,8 +51,8 @@ func New(prefix string) *Logger {
 			"WARN",
 			"ERROR",
 			"",
-			"PANIC",
 			"FATAL",
+			"PANIC",
 		},
 		bufferPool: sync.Pool{
 			New: func() interface{} {
@@ -105,6 +110,90 @@ func (l *Logger) Printj(j log.JSON) {
 	l.logj(0, j)
 }
 
+func (l *Logger) Debug(a ...interface{}) {
+	l.log(log.DEBUG, a...)
+}
+
+func (l *Logger) Debugf(format string, a ...interface{}) {
+	l.logf(log.DEBUG, format, a...)
+}
+
+func (l *Logger) Debugj(j log.JSON) {
+	l.logj(log.DEBUG, j)
+}
+
+func (l *Logger) Info(a ...interface{}) {
+	l.log(log.INFO, a...)
+}
+
+func (l *Logger) Infof(format string, a ...interface{}) {
+	l.logf(log.INFO, format, a...)
+}
+
+func (l *Logger) Infoj(j log.JSON) {
+	l.logj(log.INFO, j)
+}
+
+func (l *Logger) Warn(a ...interface{}) {
+	l.log(log.WARN, a...)
+}
+
+func (l *Logger) Warnf(format string, a ...interface{}) {
+	l.logf(log.WARN, format, a...)
+}
+
+func (l *Logger) Warnj(j log.JSON) {
+	l.logj(log.WARN, j)
+}
+
+func (l *Logger) Error(a ...interface{}) {
+	l.log(log.ERROR, a...)
+}
+
+func (l *Logger) Errorf(format string, a ...interface{}) {
+	l.logf(log.ERROR, format, a...)
+}
+
+func (l *Logger) Errorj(j log.JSON) {
+	l.logj(log.ERROR, j)
+}
+
+func (l *Logger) Fatal(a ...interface{}) {
+	l.log(fatalLevel, a...)
+	exit(1)
+}
+
+func (l *Logger) Fatalf(format string, a ...interface{}) {
+	l.logf(fatalLevel, format, a...)
+	exit(1)
+}
+
+func (l *Logger) Fatalj(j log.JSON) {
+	l.logj(fatalLevel, j)
+	exit(1)
+}
+
+func (l *Logger) Panic(a ...interface{}) {
+	l.log(panicLevel, a...)
+	panic(fmt.Sprint(a...))
+}
+
+func (l *Logger) Panicf(format string, a ...interface{}) {
+	l.logf(panicLevel, format, a...)
+	panic(fmt.Sprintf(format, a...))
+}
+
+func (l *Logger) Panicj(j log.JSON) {
+	l.logj(panicLevel, j)
+
+	b, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+
+	panic(string(b))
+}
+
 func (l *Logger) log(level log.Lvl, a ...interface{}) {
 	l.write(level, fmt.Sprint(a...))
 }
@@ -149,7 +238,7 @@ func (l *Logger) write(level log.Lvl, message string) {
 			return 0, nil
 		}
 	}); err != nil {
-		return
+		panic(err)
 	}
 
 	buf.WriteByte('\t')
