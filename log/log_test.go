@@ -164,6 +164,33 @@ func TestPanic(t *testing.T) {
 	testLog(t, buf.String(), "PANIC", `{"panic":"j"}`)
 }
 
+func TestLevel(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	l := newTestLogger(buf)
+
+	l.SetLevel(log.INFO)
+	testutils.Equal(t, l.Level(), log.INFO)
+
+	l.Debug("debug")
+	testutils.Equal(t, buf.String(), "")
+
+	l.Info("info")
+	testLog(t, buf.String(), "INFO", "info")
+}
+
+func TestHeader(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	l := newTestLogger(buf)
+
+	l.SetLevel(log.INFO)
+	l.SetHeader("${prefix} | ${level} | ")
+
+	l.Info("info")
+	testutils.Equal(t, buf.String(), "test | INFO | info\n")
+}
+
 func testLog(t *testing.T, s, levelName, message string) {
 	t.Helper()
 
