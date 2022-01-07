@@ -20,7 +20,7 @@ const (
 	panicLevel log.Lvl = 7
 
 	defaultLevel  = log.INFO
-	defaultHeader = "time:${time}\tprefix:${prefix}\tlevel:${level}\tfile:${file}\tline:${line}"
+	defaultHeader = "time:${time}\tprefix:${prefix}\tlevel:${level}\tfile:${file}\tline:${line}\tmessage:"
 )
 
 var (
@@ -241,8 +241,7 @@ func (l *Logger) write(level log.Lvl, message string) {
 		panic(err)
 	}
 
-	buf.WriteByte('\t')
-	buf.WriteString("message:" + message)
+	buf.WriteString(message)
 	buf.WriteByte('\n')
 
 	l.mutex.Lock()
