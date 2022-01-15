@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"sync"
 	"testing"
 
 	"github.com/labstack/gommon/log"
@@ -189,6 +190,28 @@ func TestHeader(t *testing.T) {
 
 	l.Info("info")
 	testutils.Equal(t, buf.String(), "test | INFO | info\n")
+}
+
+func TestConcurrent(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	l := newTestLogger(buf)
+	l.SetHeader("")
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(i int) {
+			l.Debugf("debugf%d", i)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	body := buf.String()
+	for i := 0; i < 100; i++ {
+		testutils.Contains(t, body, fmt.Sprintf("debugf%d\n", i))
+	}
 }
 
 func testLog(t *testing.T, body, levelName, message string) {
