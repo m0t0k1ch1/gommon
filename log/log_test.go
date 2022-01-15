@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"sync"
 	"testing"
 
 	"github.com/labstack/gommon/log"
@@ -191,12 +192,34 @@ func TestHeader(t *testing.T) {
 	testutils.Equal(t, buf.String(), "test | INFO | info\n")
 }
 
-func testLog(t *testing.T, s, levelName, message string) {
+func TestConcurrent(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	l := newTestLogger(buf)
+	l.SetHeader("")
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(i int) {
+			l.Debugf("debugf%d", i)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	body := buf.String()
+	for i := 0; i < 100; i++ {
+		testutils.Contains(t, body, fmt.Sprintf("debugf%d\n", i))
+	}
+}
+
+func testLog(t *testing.T, body, levelName, message string) {
 	t.Helper()
 
-	testutils.Contains(t, s, fmt.Sprintf("prefix:%s", "test"))
-	testutils.Contains(t, s, fmt.Sprintf("level:%s", levelName))
-	testutils.Contains(t, s, fmt.Sprintf("message:%s", message))
+	testutils.Contains(t, body, fmt.Sprintf("prefix:%s", "test"))
+	testutils.Contains(t, body, fmt.Sprintf("level:%s", levelName))
+	testutils.Contains(t, body, fmt.Sprintf("message:%s", message))
 }
 
 func testExit(t *testing.T, f func(), code int) {
