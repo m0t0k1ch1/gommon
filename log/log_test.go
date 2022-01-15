@@ -191,12 +191,12 @@ func TestHeader(t *testing.T) {
 	testutils.Equal(t, buf.String(), "test | INFO | info\n")
 }
 
-func testLog(t *testing.T, s, levelName, message string) {
+func testLog(t *testing.T, body, levelName, message string) {
 	t.Helper()
 
-	testutils.Contains(t, s, fmt.Sprintf("prefix:%s", "test"))
-	testutils.Contains(t, s, fmt.Sprintf("level:%s", levelName))
-	testutils.Contains(t, s, fmt.Sprintf("message:%s", message))
+	testutils.Contains(t, body, fmt.Sprintf("prefix:%s", "test"))
+	testutils.Contains(t, body, fmt.Sprintf("level:%s", levelName))
+	testutils.Contains(t, body, fmt.Sprintf("message:%s", message))
 }
 
 func testExit(t *testing.T, f func(), code int) {
