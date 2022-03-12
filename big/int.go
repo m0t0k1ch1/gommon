@@ -7,6 +7,49 @@ import (
 	"strings"
 )
 
+type StringInt struct {
+	Int *big.Int
+}
+
+func NewStringInt(s string) (*StringInt, error) {
+	si := new(StringInt)
+	if err := si.SetString(s); err != nil {
+		return nil, err
+	}
+
+	return si, nil
+}
+
+func (si *StringInt) SetString(s string) error {
+	x, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		return errors.New("failed to set string")
+	}
+
+	si.Int = x
+
+	return nil
+}
+
+func (si *StringInt) String() string {
+	return si.Int.Text(10)
+}
+
+func (si *StringInt) MarshalJSON() ([]byte, error) {
+	return json.Marshal(si.String())
+}
+
+func (si *StringInt) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	si.SetString(s)
+
+	return nil
+}
+
 type HexInt struct {
 	Int *big.Int
 }
