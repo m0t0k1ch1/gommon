@@ -1,8 +1,8 @@
 package big
 
 import (
-	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"strings"
 )
@@ -21,19 +21,16 @@ func NewHexInt(s string) (*HexInt, error) {
 }
 
 func (hi *HexInt) SetString(s string) error {
-	s = strings.TrimPrefix(s, "0x")
-	if s == "0" {
-		hi.Int = big.NewInt(0)
-
-		return nil
+	if !strings.HasPrefix(s, "0x") {
+		return errors.New("invalid hex string")
 	}
 
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		return err
+	x, ok := new(big.Int).SetString(s, 0)
+	if !ok {
+		return errors.New("failed to set string")
 	}
 
-	hi.Int = new(big.Int).SetBytes(b)
+	hi.Int = x
 
 	return nil
 }
