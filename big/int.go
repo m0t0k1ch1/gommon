@@ -1,8 +1,10 @@
 package big
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 )
@@ -48,6 +50,25 @@ func (si *StringInt) UnmarshalJSON(b []byte) error {
 	si.SetString(s)
 
 	return nil
+}
+
+func (si *StringInt) Scan(v interface{}) error {
+	if v == nil {
+		return nil
+	}
+
+	b, ok := v.([]byte)
+	if !ok {
+		return fmt.Errorf("converting %T to StringInt is unsupported", v)
+	}
+
+	si.Int = new(big.Int).SetBytes(b)
+
+	return nil
+}
+
+func (si *StringInt) Value() (driver.Value, error) {
+	return si.Int.Bytes(), nil
 }
 
 type HexInt struct {
@@ -100,4 +121,23 @@ func (hi *HexInt) UnmarshalJSON(b []byte) error {
 	hi.SetString(s)
 
 	return nil
+}
+
+func (hi *HexInt) Scan(v interface{}) error {
+	if v == nil {
+		return nil
+	}
+
+	b, ok := v.([]byte)
+	if !ok {
+		return fmt.Errorf("converting %T to HexInt is unsupported", v)
+	}
+
+	hi.Int = new(big.Int).SetBytes(b)
+
+	return nil
+}
+
+func (hi *HexInt) Value() (driver.Value, error) {
+	return hi.Int.Bytes(), nil
 }
