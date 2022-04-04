@@ -23,7 +23,7 @@ func NewStringInt(s string) (*StringInt, error) {
 }
 
 func (si *StringInt) SetString(s string) error {
-	x, ok := new(big.Int).SetString(s, 10)
+	x, ok := new(big.Int).SetString(s, 0)
 	if !ok {
 		return errors.New("failed to set string")
 	}

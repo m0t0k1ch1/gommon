@@ -52,6 +52,12 @@ func TestUnmarshalStringInt(t *testing.T) {
 	}, {
 		s:    `{"id":"2083236893"}`,
 		want: "2083236893",
+	}, {
+		s:    `{"id":"0x0"}`,
+		want: "0",
+	}, {
+		s:    `{"id":"0x7c2bac1d"}`,
+		want: "2083236893",
 	}}
 
 	for _, c := range cases {
