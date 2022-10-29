@@ -9,7 +9,7 @@ import (
 
 	"github.com/labstack/gommon/log"
 
-	"github.com/m0t0k1ch1/gommon/internal/testutils"
+	"github.com/m0t0k1ch1/gommon/internal/testutil"
 )
 
 type ExitError int
@@ -171,10 +171,10 @@ func TestLevel(t *testing.T) {
 	l := newTestLogger(buf)
 
 	l.SetLevel(log.INFO)
-	testutils.Equal(t, l.Level(), log.INFO)
+	testutil.Equal(t, l.Level(), log.INFO)
 
 	l.Debug("debug")
-	testutils.Equal(t, buf.String(), "")
+	testutil.Equal(t, buf.String(), "")
 
 	l.Info("info")
 	testLog(t, buf.String(), "INFO", "info")
@@ -189,7 +189,7 @@ func TestHeader(t *testing.T) {
 	l.SetHeader("${prefix} | ${level} | ")
 
 	l.Info("info")
-	testutils.Equal(t, buf.String(), "test | INFO | info\n")
+	testutil.Equal(t, buf.String(), "test | INFO | info\n")
 }
 
 func TestConcurrent(t *testing.T) {
@@ -210,16 +210,16 @@ func TestConcurrent(t *testing.T) {
 
 	body := buf.String()
 	for i := 0; i < 100; i++ {
-		testutils.Contains(t, body, fmt.Sprintf("debugf%d\n", i))
+		testutil.Contains(t, body, fmt.Sprintf("debugf%d\n", i))
 	}
 }
 
 func testLog(t *testing.T, body, levelName, message string) {
 	t.Helper()
 
-	testutils.Contains(t, body, fmt.Sprintf("prefix:%s", "test"))
-	testutils.Contains(t, body, fmt.Sprintf("level:%s", levelName))
-	testutils.Contains(t, body, fmt.Sprintf("message:%s", message))
+	testutil.Contains(t, body, fmt.Sprintf("prefix:%s", "test"))
+	testutil.Contains(t, body, fmt.Sprintf("level:%s", levelName))
+	testutil.Contains(t, body, fmt.Sprintf("message:%s", message))
 }
 
 func testExit(t *testing.T, f func(), code int) {
