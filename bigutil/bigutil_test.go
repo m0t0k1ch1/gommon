@@ -2,6 +2,7 @@ package bigutil
 
 import (
 	"encoding/json"
+	"errors"
 	"math/big"
 	"testing"
 
@@ -15,46 +16,48 @@ var (
 func TestScan(t *testing.T) {
 	t.Run("failure", func(t *testing.T) {
 		tcs := []struct {
-			Name         string
-			Input        any
-			ErrorMessage string
+			Name  string
+			Input any
+			Error error
 		}{
 			{
 				"nil",
 				nil,
-				"src must not be nil",
+				ErrNilSource,
 			},
 			{
 				"int",
 				0,
-				"the type of src must be []byte",
+				ErrNonBytesSource,
 			},
 			{
 				"string",
 				"string",
-				"the type of src must be []byte",
+				ErrNonBytesSource,
 			},
 			{
 				"empty []byte",
 				[]byte(nil),
-				"the length of src must be greater than 0",
+				ErrEmptyBytesSource,
 			},
 			{
 				"overlength []byte",
 				new(big.Int).Add(maxUint256, big.NewInt(1)).Bytes(),
-				"the length of src must be 32 or less",
+				ErrOverlengthBytesSource,
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.Name, func(t *testing.T) {
-				var x Int
+				x := new(Int)
 				err := x.Scan(tc.Input)
 				if err == nil {
-					t.Errorf("err must not be nil")
+					t.Error("err must not be nil")
 					return
 				}
-				testutil.Equal(t, tc.ErrorMessage, err.Error())
+				if !errors.Is(err, tc.Error) {
+					t.Errorf("expected: %q, got: %q", tc.Error, err)
+				}
 			})
 		}
 	})
@@ -79,10 +82,11 @@ func TestScan(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.Name, func(t *testing.T) {
-				var x Int
+				x := new(Int)
 				if err := x.Scan(tc.Input); err != nil {
 					t.Fatal(err)
 				}
+
 				testutil.Equal(t, tc.Output, x.String())
 			})
 		}
@@ -138,6 +142,39 @@ func TestMarshalJSON(t *testing.T) {
 }
 
 func TestUnmarshalJSON(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
+		tcs := []struct {
+			Name  string
+			Input []byte
+			Error error
+		}{
+			{
+				"negative decimal string",
+				[]byte(`"-1"`),
+				ErrNegativeValue,
+			},
+			{
+				`overlength decimal string`,
+				[]byte(`"` + new(big.Int).Add(maxUint256, big.NewInt(1)).String() + `"`),
+				ErrOverlengthValue,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.Name, func(t *testing.T) {
+				var x Int
+				err := json.Unmarshal(tc.Input, &x)
+				if err == nil {
+					t.Error("err must not be nil")
+					return
+				}
+				if !errors.Is(err, tc.Error) {
+					t.Errorf("expected: %q, got: %q", tc.Error, err)
+				}
+			})
+		}
+	})
+
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			Name  string

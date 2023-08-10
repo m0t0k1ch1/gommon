@@ -12,6 +12,17 @@ const (
 	defaultBase = 16
 
 	maxByteLength = 32
+	maxBitLength  = maxByteLength * 8
+)
+
+var (
+	ErrNilSource             = errors.New("src must not be nil")
+	ErrNonBytesSource        = errors.New("the type of src must be []byte")
+	ErrEmptyBytesSource      = errors.New("the length of src in bytes must be greater than 0")
+	ErrOverlengthBytesSource = errors.Errorf("the length of src in bytes must be %d or less", maxByteLength)
+
+	ErrNegativeValue   = errors.New("the value must be 0 or more")
+	ErrOverlengthValue = errors.Errorf("the length of the value in bits must be %d or less", maxBitLength)
 )
 
 type Int struct {
@@ -63,18 +74,18 @@ func (x Int) Value() (driver.Value, error) {
 
 func (x *Int) Scan(src any) error {
 	if src == nil {
-		return errors.New("src must not be nil")
+		return ErrNilSource
 	}
 
 	b, ok := src.([]byte)
 	if !ok {
-		return errors.New("the type of src must be []byte")
+		return ErrNonBytesSource
 	}
 	if len(b) == 0 {
-		return errors.New("the length of src must be greater than 0")
+		return ErrEmptyBytesSource
 	}
 	if len(b) > maxByteLength {
-		return errors.Errorf("the length of src must be %d or less", maxByteLength)
+		return ErrOverlengthBytesSource
 	}
 
 	x.x = *new(big.Int).SetBytes(b)
@@ -101,5 +112,15 @@ func (x *Int) UnmarshalText(text []byte) error {
 	}
 
 	x.SetBaseTo10()
-	return x.x.UnmarshalText(text)
+	if err := x.x.UnmarshalText(text); err != nil {
+		return err
+	}
+	if x.x.Sign() < 0 {
+		return ErrNegativeValue
+	}
+	if x.x.BitLen() > maxBitLength {
+		return ErrOverlengthValue
+	}
+
+	return nil
 }
