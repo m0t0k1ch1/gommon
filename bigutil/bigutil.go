@@ -108,7 +108,15 @@ func (x Int) MarshalText() ([]byte, error) {
 func (x *Int) UnmarshalText(text []byte) error {
 	if len(text) >= 2 && text[0] == '0' && text[1] == 'x' {
 		x.SetBaseTo16()
-		return (*eth_hexutil.Big)(&x.x).UnmarshalText(text)
+		if err := (*eth_hexutil.Big)(&x.x).UnmarshalText(text); err != nil {
+			if errors.Is(err, eth_hexutil.ErrBig256Range) {
+				return ErrOverlengthValue
+			}
+
+			return err
+		}
+
+		return nil
 	}
 
 	x.SetBaseTo10()

@@ -158,6 +158,11 @@ func TestUnmarshalJSON(t *testing.T) {
 				[]byte(`"` + new(big.Int).Add(maxUint256, big.NewInt(1)).String() + `"`),
 				ErrOverlengthValue,
 			},
+			{
+				`overlength hex string`,
+				[]byte(`"0x` + new(big.Int).Add(maxUint256, big.NewInt(1)).Text(16) + `"`),
+				ErrOverlengthValue,
+			},
 		}
 
 		for _, tc := range tcs {
