@@ -50,7 +50,12 @@ func (x *Int) SetBaseTo16() {
 }
 
 func (x Int) Bytes() []byte {
-	return x.x.Bytes()
+	b := x.x.Bytes()
+	if len(b) == 0 {
+		return []byte{0}
+	}
+
+	return b
 }
 
 func (x Int) String() string {
